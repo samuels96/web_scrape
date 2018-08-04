@@ -4,8 +4,7 @@ import requests
 import bs4 as bs
 import re
 from builtins import input
-import multiprocessing
-from multiprocessing import Process
+
 
 def remove_last_line():
     print('\x1b[1A' +'\x1b[2K' + '\x1b[1A')
@@ -18,6 +17,15 @@ def get_page(soup,pr,po):
     with open("{}/{}/{}_all.txt".format(pr,po,po), "w" , encoding="utf-8") as handler:
             handler.write(str(soup))
 
+def get_text(soup,pr,po):
+    with open("{}/{}/{}_text.txt".format(pr,po,po), "w" , encoding="utf-8") as handler:
+        for x in soup.find_all('p'):
+            handler.write(x.get_text()+"\n")
+
+    with open("{}/{}/{}_paragrarphs.html".format(pr,po,po), "w" , encoding="utf-8") as handler:
+        for x in soup.find_all('p'):
+            handler.write(str(x))
+
 def get_img(soup,base_url,pr,po):
     img = soup.find_all("img")
 
@@ -29,6 +37,8 @@ def get_img(soup,base_url,pr,po):
                 continue
             if x.get("src").startswith("/"):
                 handler.write(base_url+x.get("src")+"\n")
+            elif x.get("src").startswith("http") == False:
+                handler.write(base_url+"/"+x.get("src"))
             elif x.get("src").startswith(".."):
                 handler.write(base_url+x.get("src")[2:]+"\n")
             else:
@@ -50,6 +60,8 @@ def download_img(soup,base_url,pr,po):
             continue
         if x.get("src").startswith("/"):
             req = (base_url+x.get("src"))
+        elif x.get("src").startswith("http") == False:
+            req = (base_url+"/"+x.get("src"))
         elif x.get("src").startswith(".."):
             req = (base_url+x.get("src")[2:])
         else:
@@ -66,27 +78,7 @@ def download_img(soup,base_url,pr,po):
         output.write(req.content)
         output.close()
 
-def get_text(soup,pr,po):
-    with open("{}/{}/{}_text.txt".format(pr,po,po), "w" , encoding="utf-8") as handler:
-        for x in soup.find_all('p'):
-            handler.write(x.get_text()+"\n")
-
-    with open("{}/{}/{}_paragrarphs.html".format(pr,po,po), "w" , encoding="utf-8") as handler:
-        for x in soup.find_all('p'):
-            handler.write(str(x))
-
 def get_all(soup,base_url,pr,po):
-    if os.name != "nt":
-        p1 = Process(target=get_text,args=(soup,))
-        P2 = Process(target=download_img,args=(soup,))
-        p3 = Process(target=get_img,args=(soup,))
-        p4 = Process(target=get_page,args=(soup,))
-        p1.start()
-        p2.start()
-        p3.start()
-        p4.start()
-
-    else:
         get_page(soup,pr,po)
         get_text(soup,pr,po)
         download_img(soup,base_url,pr,po)
@@ -94,7 +86,7 @@ def get_all(soup,base_url,pr,po):
 
 def main():
     while True:
-        url = input("\nEnter valid url to srcape > ")
+        url = input("\nEnter website url to srcape > ")
         print("\nurl validation in progress...")
         if url.startswith("http") == False:
             url = "https://" + url
