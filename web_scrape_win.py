@@ -3,6 +3,7 @@ import time
 import requests
 import bs4 as bs
 import re
+from threading import Thread
 from builtins import input
 
 
@@ -79,10 +80,18 @@ def download_img(soup,base_url,pr,po):
         output.close()
 
 def get_all(soup,base_url,pr,po):
-        get_page(soup,pr,po)
-        get_text(soup,pr,po)
-        download_img(soup,base_url,pr,po)
-        get_img(soup,base_url,pr,po)
+        p1 = Thread(target=download_img,args=(soup,base_url,pr,po))
+        p2 = Thread(target=get_text,args=(soup,pr,po))
+        p3 = Thread(target=get_img,args=(soup,base_url,pr,po))
+        p4 = Thread(target=get_page,args=(soup,pr,po))
+        p1.start()
+        p2.start()
+        p3.start()
+        p4.start()
+        p1.join()
+        p2.join()
+        p3.join()
+        p4.join()
 
 def main():
     while True:
